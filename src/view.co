@@ -1,0 +1,143 @@
+let parent = Backbone.View
+
+  fsr = ->
+    {when, defer, reject} = $J.Deferred
+
+    (when @fetchTemplate!, @serializeData!)then (tpl, data)~>
+      return reject that if $J.assert tpl, 'falsy template'
+      @renderHtml tpl, data
+
+
+  $J.View = parent.extend {
+
+    initialize: ->
+      @data = {}
+      @_sync = {}
+      @_subviews = {}
+
+    fetchTemplate: ->
+      $J.Dom.html $ "##{@template}"
+    renderHtml: (tpl, data)->
+      _.template tpl, data
+    serializeData: -> _.extend {}, @data, @_sync
+    renderElement: ->
+      @trigger '$J:render:before'
+      @trigger '$J:render:full:before'
+
+      fsr.call @
+      .then (html)~>
+        $J.Dom.html @$el, html
+      .then ~>
+        $J.Deferred.when @mapSubviews (view, selector)~>
+          $el = @$ selector
+          return if $J.assert $el.length > 0, 'subview selector missed'
+
+          view.setElement $el if view.el !== $el.0
+
+          if view instanceof $J.View
+            view.renderElement!
+          else
+            view.render!
+      .then ~>
+        @trigger '$J:render:done'
+        @trigger '$J:render:full:done'
+        true
+      , !~>
+        @trigger '$J:render:fail', @@
+        @trigger '$J:render:full:fail', @@
+
+    renderFields: (syncName, fields)->
+      return @renderElement! if !fields
+
+      @trigger '$J:render:before'
+      @trigger '$J:render:part:before'
+
+      view = @
+      fields = @parseFields syncName, fields
+      fields.push \*
+
+      fsr.call @
+      .then (html)~>
+        $html = $J.Dom.html ($ document.createElement \div), html
+        _.each (@extractFields $html, fields), (src)~>
+          @replaceWithSrc src
+
+      .then ~>
+        @trigger '$J:render:done'
+        @trigger '$J:render:part:done'
+        true
+      , !~>
+        @trigger '$J:render:fail', @@
+        @trigger '$J:render:part:fail', @@
+
+    parseFields: (syncName, fields)->
+      fields = switch
+      case _.isString fields
+        fields.split ' '
+      case _.isArray fields
+        fields
+      default
+        throw new Error 'malformed fields'
+
+      (_.chain fields)compact!map(-> "#{syncName}.#{it}")value!
+
+    extractFields: ($el, fields)->
+      $r = $!
+      _.each fields, (field)~>
+        $r := $r.add $el.find "[j-field~=\"#{field}\"]"
+
+      $r.toArray!
+
+    replaceWithSrc: (src)->
+      $src = $ src
+      id = ($src.attr \j-id) || ($src.attr \j-field)
+      $dst = @$el.find "[j-id=\"#{id}\"],:not([j-id])[j-field=\"#{id}\"]"
+
+      return if $dst.length == 0 || $src.length == 0
+      $J.Dom.replaceWith $dst, $src
+
+    sync: (syncName, synchronizer, events)->
+      @stopListening that if @_sync[syncName]
+      @_sync[syncName] = synchronizer
+
+      @listenTo synchronizer, '$J:sync', !(fields)~>
+        @renderFields syncName, fields
+
+      if events
+        @listenTo synchronizer, events, !~>
+          @render!
+
+      @
+
+    unsync: (syncName)->
+      @stopListening that if @_sync[syncName]
+      delete @_sync[syncName]
+
+      @
+
+    setView: (selector, view)->
+      that.remove! if @_subviews[selector]
+      @_subviews[selector] = view
+      view.on \all, !(name)~>
+        return if (name.substring 0, 3) is '$J:'
+        @trigger.apply @, @@
+
+    ##### override methods to manage subviews
+    remove: $J.before parent::remove, !->
+      @mapSubviews !-> it.remove!
+    delegateEvents: $J.before parent::delegateEvents, !->
+      @mapSubviews !-> it.delegateEvents! if it.$el
+    undelegateEvents: $J.before parent::undelegateEvents, !->
+      @mapSubviews !-> it.undelegateEvents! if it.$el
+
+    setElement: $J.after parent::setElement, ->
+      $J.advice @$el.length is 1, '`view.$el` should contain exactly one element'
+
+    render: ->
+      @renderElement!
+      @
+
+    mapSubviews: (iterator, context)->
+      _.map @_subviews, iterator, context
+
+  }

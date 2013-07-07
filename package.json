@@ -1,0 +1,28 @@
+{
+  "name": "backbone.joint",
+  "version": "0.0.1",
+  "description": "A bit more than backbone",
+  "main": "null",
+  "dependencies": {},
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-coco": "~0.1.0",
+    "grunt-contrib-watch": "~0.4.4",
+    "grunt-wrap": "~0.2.0",
+    "grunt-contrib-uglify": "~0.2.2",
+    "grunt-beep": "~0.2.0"
+  },
+  "scripts": {
+    "test": "grunt test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mcfog/backbone.joint"
+  },
+  "keywords": [
+    "backbone"
+  ],
+  "author": "McFog W.",
+  "license": "MIT",
+  "readmeFilename": "README.md"
+}

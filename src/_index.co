@@ -1,0 +1,68 @@
+
+{$} = Backbone
+_ = (->@)!_ || require? 'underscore'
+$J = Backbone.Joint = {$, _}
+
+extend = Backbone.Model.extend
+
+
+$J.assert = \
+if console?
+  (cond, msg = 'Assertion failed')~>
+    console.warn msg if !cond
+    if cond then false else msg
+else
+  (cond, msg = 'Assertion failed')~>
+    if cond then false else msg
+
+$J.advice = \
+if console?
+  (cond, msg)~>
+    console.info msg if !cond
+    if cond then false else msg
+else
+  (cond, msg = 'Assertion failed')~>
+    if cond then false else msg
+
+$J.before = (func, ...beforeFuncs)->
+  ->
+    state = 
+      context: @
+      args: @@
+
+    _.some beforeFuncs, (bfunc)->
+      bfunc.state ?= []
+      bfunc.state.unshift @
+      bfunc.apply @context, @args
+      @{args, context, breaked, preventDefault, returnValue} = bfunc.state.0
+      bfunc.state.shift!
+      @breaked
+    , state
+
+    if state.preventDefault
+      state.returnValue 
+    else
+      func.apply state.context, state.args
+
+$J.after = (func, ...afterFuncs)->
+  ->
+    state = 
+      context: @
+      args: @@
+      returnValue: func ...
+
+    _.some afterFuncs, (afunc)->
+      afunc.state ?= []
+      afunc.state.unshift @
+      afunc.apply @context, @args
+      @{args, context, breaked, returnValue} = afunc.state.0
+      afunc.state.shift!
+      @breaked
+    , state
+
+    state.returnValue
+
+let @ = $J.Emitter = (->)
+
+  @extend = extend
+  @:: <<< Backbone.Events

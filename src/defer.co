@@ -1,0 +1,44 @@
+#### Backbone.Joint.Deferred ###
+#Backbone.Joint _hopes_ to borrow deferred from jQuery
+#developer may override this to adapt their own deferred
+#---
+let @ = $J.Deferred = {}
+
+  @when = $~when
+
+  @defer = ->
+    dfr = $.Deferred!
+    
+    {
+      resolver: dfr~{resolve, reject, notify, state}
+      promise: @_mkPromise dfr
+    }
+
+  #simple resolved promise creation
+  @resolve = (...args)~>
+    {resolver, promise} = @defer!
+    resolver.resolve ...args
+    promise
+
+  #simple rejected promise creation
+  @reject = (...args)~>
+    {resolver, promise} = @defer!
+    resolver.reject ...args
+    promise
+
+  #jQuery detection
+  @_mkPromise = \
+  if ver = $::jquery
+    switch
+    #jQ1.5~1.7 use `pipe` instead of `then`
+    case ver.match /^1\.[5-7]/
+      ->
+        with it.promise!
+          #monkey patch the difference
+          &then = &~pipe
+    case ver.match /^(1\.[8-9]|2\.)/
+      -> it.promise!
+    default
+      throw new Error 'Backbone.Joint: unsupported jquery version'
+  else
+    -> it.promise!

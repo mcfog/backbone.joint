@@ -1,0 +1,9 @@
+$J.ViewModel = $J.Emitter.extend do
+  constructor: ->
+    @initialize? ...
+    @
+
+  initialize: (->)
+
+  sync: !->
+    @trigger '$J:sync', ...@@

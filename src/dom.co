@@ -1,0 +1,9 @@
+#### Backbone.Joint.Dom ###
+#borrow dom manipulate from jQuery
+#developer may override this to adapt their own dom wrapper
+#---
+let @ = $J.Dom = {}
+
+  @html = ($el, html)-> $el.html html
+
+  @replaceWith = ($el, newContext)-> $el.replaceWith newContext
