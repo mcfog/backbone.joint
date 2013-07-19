@@ -53,13 +53,12 @@ let parent = Backbone.View
       @trigger '$J:render:part:before'
 
       view = @
-      fields = @parseFields syncName, fields
-      fields.push \*
+      fields = @parseFields fields
 
       fsr.call @
       .then (html)~>
         $html = $J.Dom.html ($ document.createElement \div), html
-        _.each (@extractFields $html, fields), (src)~>
+        _.each (@extractFields $html, syncName, fields), (src)~>
           @replaceWithSrc src
 
       .then ~>
@@ -70,7 +69,7 @@ let parent = Backbone.View
         @trigger '$J:render:fail', @@
         @trigger '$J:render:part:fail', @@
 
-    parseFields: (syncName, fields)->
+    parseFields: (fields)->
       fields = switch
       case _.isString fields
         fields.split ' '
@@ -79,12 +78,12 @@ let parent = Backbone.View
       default
         throw new Error 'malformed fields'
 
-      (_.chain fields)compact!map(-> "#{syncName}.#{it}")value!
+      _.compact fields
 
-    extractFields: ($el, fields)->
+    extractFields: ($el, syncName, fields)->
       $r = $!
       _.each fields, (field)~>
-        $r := $r.add $el.find "[j-field~=\"#{field}\"]"
+        $r := $r.add $el.find "[j-field~=\"#{syncName}.#{field}\"],[j-field~=\"#{syncName}.*\"],[j-field~=\"*\"]"
 
       $r.toArray!
 

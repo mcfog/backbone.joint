@@ -232,12 +232,11 @@ $J.after = function(func){
       this.trigger('$J:render:before');
       this.trigger('$J:render:part:before');
       view = this;
-      fields = this.parseFields(syncName, fields);
-      fields.push('*');
+      fields = this.parseFields(fields);
       return fsr.call(this).then(function(html){
         var $html;
         $html = $J.Dom.html($(document.createElement('div')), html);
-        return _.each(this$.extractFields($html, fields), function(src){
+        return _.each(this$.extractFields($html, syncName, fields), function(src){
           return this$.replaceWithSrc(src);
         });
       }).then(function(){
@@ -249,7 +248,7 @@ $J.after = function(func){
         this$.trigger('$J:render:part:fail', arguments);
       });
     },
-    parseFields: function(syncName, fields){
+    parseFields: function(fields){
       fields = (function(){
         switch (false) {
         case !_.isString(fields):
@@ -260,15 +259,13 @@ $J.after = function(func){
           throw new Error('malformed fields');
         }
       }());
-      return _.chain(fields).compact().map(function(it){
-        return syncName + "." + it;
-      }).value();
+      return _.compact(fields);
     },
-    extractFields: function($el, fields){
+    extractFields: function($el, syncName, fields){
       var $r, this$ = this;
       $r = $();
       _.each(fields, function(field){
-        return $r = $r.add($el.find("[j-field~=\"" + field + "\"]"));
+        return $r = $r.add($el.find("[j-field~=\"" + syncName + "." + field + "\"],[j-field~=\"" + syncName + ".*\"],[j-field~=\"*\"]"));
       });
       return $r.toArray();
     },
