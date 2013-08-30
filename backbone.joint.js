@@ -1,6 +1,6 @@
 ;(function(root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define(factory);
+    define(['backbone'], factory);
   } else {
     factory();
   }
@@ -206,8 +206,9 @@ $J.after = function(func){
           if ($J.assert($el.length > 0, 'subview selector missed')) {
             return;
           }
-          if (view.el !== $el[0]) {
-            view.setElement($el);
+          $J.advice($el.length === 1, 'subview selector more than 1 match');
+          if ($el.has(view.el).length === 0) {
+            $el.empty().append(view.el);
           }
           if (view instanceof $J.View) {
             return view.renderElement();
@@ -230,7 +231,7 @@ $J.after = function(func){
         return this.renderElement();
       }
       this.trigger('$J:render:before');
-      this.trigger('$J:render:part:before');
+      this.trigger('$J:render:part:before', [syncName, fields]);
       view = this;
       fields = this.parseFields(fields);
       return fsr.call(this).then(function(html){
@@ -241,7 +242,7 @@ $J.after = function(func){
         });
       }).then(function(){
         this$.trigger('$J:render:done');
-        this$.trigger('$J:render:part:done');
+        this$.trigger('$J:render:part:done', [syncName, fields]);
         return true;
       }, function(){
         this$.trigger('$J:render:fail', arguments);
@@ -304,9 +305,13 @@ $J.after = function(func){
       return this;
     },
     setView: function(selector, view){
-      var that, this$ = this;
+      var that, $el, this$ = this;
       if (that = this._subviews[selector]) {
         that.remove();
+      }
+      $el = this.$(selector);
+      if ($el.length > 0 && $el.has(view.el).length === 0) {
+        $el.empty().append(view.el);
       }
       this._subviews[selector] = view;
       return view.on('all', function(name){

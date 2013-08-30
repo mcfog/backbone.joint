@@ -30,9 +30,10 @@ let parent = Backbone.View
       .then ~>
         $J.Deferred.when @mapSubviews (view, selector)~>
           $el = @$ selector
-          return if $J.assert $el.length > 0, 'subview selector missed'
 
-          view.setElement $el if view.el !== $el.0
+          return if $J.assert $el.length > 0, 'subview selector missed'
+          $J.advice $el.length is 1, 'subview selector more than 1 match'
+          $el.empty!append view.el if $el.has(view.el)length is 0
 
           if view instanceof $J.View
             view.renderElement!
@@ -50,7 +51,7 @@ let parent = Backbone.View
       return @renderElement! if !fields
 
       @trigger '$J:render:before'
-      @trigger '$J:render:part:before'
+      @trigger '$J:render:part:before', [syncName, fields]
 
       view = @
       fields = @parseFields fields
@@ -63,7 +64,7 @@ let parent = Backbone.View
 
       .then ~>
         @trigger '$J:render:done'
-        @trigger '$J:render:part:done'
+        @trigger '$J:render:part:done', [syncName, fields]
         true
       , !~>
         @trigger '$J:render:fail', @@
@@ -116,6 +117,10 @@ let parent = Backbone.View
 
     setView: (selector, view)->
       that.remove! if @_subviews[selector]
+
+      $el = @$ selector
+      $el.empty!append view.el if $el.length > 0 && $el.has(view.el)length is 0
+
       @_subviews[selector] = view
       view.on \all, !(name)~>
         return if (name.substring 0, 3) is '$J:'

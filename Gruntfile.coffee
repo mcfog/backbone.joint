@@ -13,7 +13,7 @@ module.exports = (grunt)->
         wrapper: ["""
         ;(function(root, factory) {
           if (typeof define === 'function' && define.amd) {
-            define(factory);
+            define(['backbone'], factory);
           } else {
             factory();
           }
