@@ -7,3 +7,13 @@ let @ = $J.Dom = {}
   @html = ($el, html)-> $el.html html
 
   @replaceWith = ($el, newContext)-> $el.replaceWith newContext
+
+  @setInnerView = ($container, view)->
+    @removeInnerView $container
+
+    $container.empty!append(view.el)data('$J:innerView', view)
+
+  @removeInnerView = ($container)->
+    that.remove! if($container.data('$J:innerView'))
+
+    $container

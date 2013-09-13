@@ -34,4 +34,4 @@ module.exports = (grunt)->
   grunt.loadNpmTasks 'grunt-contrib-watch'
 
   grunt.registerTask 'build', ['coco', 'wrap', 'beep:*-*']
-  grunt.registerTask 'default', ['coco']
+  grunt.registerTask 'default', ['build']

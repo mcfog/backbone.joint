@@ -33,7 +33,7 @@ let parent = Backbone.View
 
           return if $J.assert $el.length > 0, 'subview selector missed'
           $J.advice $el.length is 1, 'subview selector more than 1 match'
-          $el.empty!append view.el if $el.has(view.el)length is 0
+          $J.Dom.setInnerView $el, view if $el.has(view.el)length is 0
 
           if view instanceof $J.View
             view.renderElement!
@@ -116,10 +116,8 @@ let parent = Backbone.View
       @
 
     setView: (selector, view)->
-      that.remove! if @_subviews[selector]
-
       $el = @$ selector
-      $el.empty!append view.el if $el.length > 0 && $el.has(view.el)length is 0
+      $J.Dom.setInnerView $el, view if $el.length > 0 && $el.has(view.el)length is 0
 
       @_subviews[selector] = view
       view.on \all, !(name)~>

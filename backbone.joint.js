@@ -164,6 +164,17 @@ $J.after = function(func){
   this.replaceWith = function($el, newContext){
     return $el.replaceWith(newContext);
   };
+  this.setInnerView = function($container, view){
+    this.removeInnerView($container);
+    return $container.empty().append(view.el).data('$J:innerView', view);
+  };
+  this.removeInnerView = function($container){
+    var that;
+    if (that = $container.data('$J:innerView')) {
+      that.remove();
+    }
+    return $container;
+  };
 }.call($J.Dom = {}));
 (function(parent){
   var fsr;
@@ -208,7 +219,7 @@ $J.after = function(func){
           }
           $J.advice($el.length === 1, 'subview selector more than 1 match');
           if ($el.has(view.el).length === 0) {
-            $el.empty().append(view.el);
+            $J.Dom.setInnerView($el, view);
           }
           if (view instanceof $J.View) {
             return view.renderElement();
@@ -305,13 +316,10 @@ $J.after = function(func){
       return this;
     },
     setView: function(selector, view){
-      var that, $el, this$ = this;
-      if (that = this._subviews[selector]) {
-        that.remove();
-      }
+      var $el, this$ = this;
       $el = this.$(selector);
       if ($el.length > 0 && $el.has(view.el).length === 0) {
-        $el.empty().append(view.el);
+        $J.Dom.setInnerView($el, view);
       }
       this._subviews[selector] = view;
       return view.on('all', function(name){
