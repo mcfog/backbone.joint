@@ -35,10 +35,13 @@ let @ = $J.Deferred = {}
       ->
         with it.promise!
           #monkey patch the difference
-          &then = &~pipe
-    case ver.match /^(1\.[8-9]|2\.)/
-      -> it.promise!
+          &then = ->
+            newPromise = @pipe ...
+            newPromise.then = @@callee
+
+            newPromise
+
     default
-      throw new Error 'Backbone.Joint: unsupported jquery version'
+      -> it.promise!
   else
     -> it.promise!
