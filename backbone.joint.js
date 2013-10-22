@@ -142,15 +142,18 @@ $J.after = function(func){
         return function(it){
           var x0$;
           x0$ = it.promise();
-          x0$.then = bind$(x0$, 'pipe');
+          x0$.then = function(){
+            var newPromise;
+            newPromise = this.pipe.apply(this, arguments);
+            newPromise.then = arguments.callee;
+            return newPromise;
+          };
           return x0$;
         };
-      case !ver.match(/^(1\.[8-9]|2\.)/):
+      default:
         return function(it){
           return it.promise();
         };
-      default:
-        throw new Error('Backbone.Joint: unsupported jquery version');
       }
     }())
     : function(it){
