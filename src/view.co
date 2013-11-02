@@ -58,7 +58,10 @@ let parent = Backbone.View
 
       fsr.call @
       .then (html)~>
-        $html = $J.Dom.html ($ document.createElement \div), html
+        # $html = $J.Dom.html ($ document.createElement \div), html
+        div = document.createElement \div
+            &innerHTML = html
+        $html = $ div
         _.each (@extractFields $html, syncName, fields), (src)~>
           @replaceWithSrc src
 
@@ -84,7 +87,9 @@ let parent = Backbone.View
     extractFields: ($el, syncName, fields)->
       $r = $!
       _.each fields, (field)~>
-        $r := $r.add $el.find "[j-field~=\"#{syncName}.#{field}\"],[j-field~=\"#{syncName}.*\"],[j-field~=\"*\"]"
+        $parts = $el.find "[j-field]" .filter ->
+            _.any (($ @).attr 'j-field' .split ' '), -> it is "#{syncName}.#{field}" || it is "#{syncName}.*" || it is "*"
+        $r := $r.add $parts
 
       $r.toArray!
 

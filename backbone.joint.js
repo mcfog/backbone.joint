@@ -249,8 +249,10 @@ $J.after = function(func){
       view = this;
       fields = this.parseFields(fields);
       return fsr.call(this).then(function(html){
-        var $html;
-        $html = $J.Dom.html($(document.createElement('div')), html);
+        var x0$, div, $html;
+        x0$ = div = document.createElement('div');
+        x0$.innerHTML = html;
+        $html = $(div);
         return _.each(this$.extractFields($html, syncName, fields), function(src){
           return this$.replaceWithSrc(src);
         });
@@ -280,7 +282,13 @@ $J.after = function(func){
       var $r, this$ = this;
       $r = $();
       _.each(fields, function(field){
-        return $r = $r.add($el.find("[j-field~=\"" + syncName + "." + field + "\"],[j-field~=\"" + syncName + ".*\"],[j-field~=\"*\"]"));
+        var $parts;
+        $parts = $el.find("[j-field]").filter(function(){
+          return _.any($(this).attr('j-field').split(' '), function(it){
+            return it === syncName + "." + field || it === syncName + ".*" || it === "*";
+          });
+        });
+        return $r = $r.add($parts);
       });
       return $r.toArray();
     },
