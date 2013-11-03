@@ -104,6 +104,7 @@ $J.after = function(func){
 (function(){
   this.extend = extend;
   import$(this.prototype, Backbone.Events);
+  import$(this, Backbone.Events);
 }.call($J.Emitter = function(){}));
 (function(){
   var ver, this$ = this;
