@@ -26,6 +26,7 @@ let parent = Backbone.View
 
       fsr.call @
       .then (html)~>
+        @removeSubviews!
         $J.Dom.html @$el, html
       .then ~>
         $J.Deferred.when @mapSubviews (view, selector)~>
@@ -33,7 +34,7 @@ let parent = Backbone.View
 
           return if $J.assert $el.length > 0, 'subview selector missed'
           $J.advice $el.length is 1, 'subview selector more than 1 match'
-          $J.Dom.setInnerView $el, view if $el.has(view.el)length is 0
+          $J.Dom.appendInnerView $el, view if $el.has(view.el)length is 0
 
           if view instanceof $J.View
             view.renderElement!
@@ -124,14 +125,29 @@ let parent = Backbone.View
       $el = @$ selector
       $J.Dom.setInnerView $el, view if $el.length > 0 && $el.has(view.el)length is 0
 
-      @_subviews[selector] = view
-      view.on \all, !(name)~>
-        return if (name.substring 0, 3) is '$J:'
-        @trigger.apply @, @@
+      @_subviews[selector] = [view]
+      view.on \all, @~_handleSubViewEvent
+
+      @
+
+    _handleSubViewEvent: !(name)->
+      return if (name.substring 0, 3) is '$J:'
+      @trigger.apply @, @@
+
+    appendView: (selector, views)->
+      views = [views] if !_.isArray views
+
+      for view of views
+        @_subviews@@[selector]push view
+        view.on \all, @~_handleSubViewEvent
+
+      @
+
+
 
     ##### override methods to manage subviews
     remove: $J.before parent::remove, !->
-      @mapSubviews !-> it.remove!
+      @removeSubviews!
     delegateEvents: $J.before parent::delegateEvents, !->
       @mapSubviews !-> it.delegateEvents! if it.$el
     undelegateEvents: $J.before parent::undelegateEvents, !->
@@ -145,6 +161,12 @@ let parent = Backbone.View
       @
 
     mapSubviews: (iterator, context)->
-      _.map @_subviews, iterator, context
+      _.flatten _.map @_subviews, (views, selector)->
+        _.map views, (view)->
+          iterator.call context, view, selector
+
+    removeSubviews: ->
+      _.each @_subviews, (views, selector)~>
+        $J.Dom.removeInnerView @$ selector
 
   }

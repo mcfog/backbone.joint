@@ -162,22 +162,27 @@ $J.after = function(func){
     };
 }.call($J.Deferred = {}));
 (function(){
+  var INNERVIEW;
   this.html = function($el, html){
     return $el.html(html);
   };
   this.replaceWith = function($el, newContext){
     return $el.replaceWith(newContext);
   };
+  INNERVIEW = '$J:innerView';
+  this.appendInnerView = function($container, view){
+    var ref$;
+    return ((ref$ = $container.append(view.el).data())[INNERVIEW] || (ref$[INNERVIEW] = [])).push(view);
+  };
   this.setInnerView = function($container, view){
     this.removeInnerView($container);
-    return $container.empty().append(view.el).data('$J:innerView', view);
+    return $container.empty().append(view.el).data(INNERVIEW, [view]);
   };
   this.removeInnerView = function($container){
-    var that;
-    if (that = $container.data('$J:innerView')) {
-      that.remove();
-    }
-    return $container;
+    _.each($container.data(INNERVIEW), function(it){
+      return it.remove();
+    });
+    return $container.data(INNERVIEW, []);
   };
 }.call($J.Dom = {}));
 (function(parent){
@@ -213,6 +218,7 @@ $J.after = function(func){
       this.trigger('$J:render:before');
       this.trigger('$J:render:full:before');
       return fsr.call(this).then(function(html){
+        this$.removeSubviews();
         return $J.Dom.html(this$.$el, html);
       }).then(function(){
         return $J.Deferred.when(this$.mapSubviews(function(view, selector){
@@ -223,7 +229,7 @@ $J.after = function(func){
           }
           $J.advice($el.length === 1, 'subview selector more than 1 match');
           if ($el.has(view.el).length === 0) {
-            $J.Dom.setInnerView($el, view);
+            $J.Dom.appendInnerView($el, view);
           }
           if (view instanceof $J.View) {
             return view.renderElement();
@@ -328,23 +334,35 @@ $J.after = function(func){
       return this;
     },
     setView: function(selector, view){
-      var $el, this$ = this;
+      var $el;
       $el = this.$(selector);
       if ($el.length > 0 && $el.has(view.el).length === 0) {
         $J.Dom.setInnerView($el, view);
       }
-      this._subviews[selector] = view;
-      return view.on('all', function(name){
-        if (name.substring(0, 3) === '$J:') {
-          return;
-        }
-        this$.trigger.apply(this$, arguments);
-      });
+      this._subviews[selector] = [view];
+      view.on('all', bind$(this, '_handleSubViewEvent'));
+      return this;
+    },
+    _handleSubViewEvent: function(name){
+      if (name.substring(0, 3) === '$J:') {
+        return;
+      }
+      this.trigger.apply(this, arguments);
+    },
+    appendView: function(selector, views){
+      var i$, len$, view, ref$;
+      if (!_.isArray(views)) {
+        views = [views];
+      }
+      for (i$ = 0, len$ = views.length; i$ < len$; ++i$) {
+        view = views[i$];
+        ((ref$ = this._subviews)[selector] || (ref$[selector] = [])).push(view);
+        view.on('all', bind$(this, '_handleSubViewEvent'));
+      }
+      return this;
     },
     remove: $J.before(parent.prototype.remove, function(){
-      this.mapSubviews(function(it){
-        it.remove();
-      });
+      this.removeSubviews();
     }),
     delegateEvents: $J.before(parent.prototype.delegateEvents, function(){
       this.mapSubviews(function(it){
@@ -368,7 +386,17 @@ $J.after = function(func){
       return this;
     },
     mapSubviews: function(iterator, context){
-      return _.map(this._subviews, iterator, context);
+      return _.flatten(_.map(this._subviews, function(views, selector){
+        return _.map(views, function(view){
+          return iterator.call(context, view, selector);
+        });
+      }));
+    },
+    removeSubviews: function(){
+      var this$ = this;
+      return _.each(this._subviews, function(views, selector){
+        return $J.Dom.removeInnerView(this$.$(selector));
+      });
     }
   });
 }.call(this, Backbone.View));

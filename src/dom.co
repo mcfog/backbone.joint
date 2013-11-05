@@ -8,12 +8,17 @@ let @ = $J.Dom = {}
 
   @replaceWith = ($el, newContext)-> $el.replaceWith newContext
 
+  INNERVIEW = '$J:innerView';
+
+  @appendInnerView = ($container, view)->
+    $container.append(view.el)data!@@[INNERVIEW]push view
+
   @setInnerView = ($container, view)->
     @removeInnerView $container
 
-    $container.empty!append(view.el)data('$J:innerView', view)
+    $container.empty!append(view.el)data(INNERVIEW, [view])
 
   @removeInnerView = ($container)->
-    that.remove! if($container.data('$J:innerView'))
+    _.each ($container.data INNERVIEW), ->it.remove!
+    $container.data INNERVIEW, []
 
-    $container
