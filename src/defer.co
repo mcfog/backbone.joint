@@ -25,6 +25,35 @@ let @ = $J.Deferred = {}
     {resolver, promise} = @defer!
     resolver.reject ...args
     promise
+    
+  #convert event to promise
+  @listen = (obj, [okEvents, okCb], [failEvents, failCb] || [null, null])~>
+    {resolver, promise} = @defer!
+    if okEvents
+      obj.once okEvents, ->
+        okHandler ...
+        destroy!
+
+    if failEvents
+      obj.once failEvents, ->
+        failHandler ...
+        destroy!
+
+    function destroy
+      obj.off okEvents, okEvents if okEvents
+      obj.off failEvents, failCb if failEvents
+    
+    function okHandler
+      resolver.resolve result okCb
+    function failHandler
+      resolver.resolve result failCb
+    function result cb
+      if _.isFunction cb
+        cb!
+      else
+        cb
+    
+    return promise
 
   #jQuery detection
   @_mkPromise = \

@@ -136,6 +136,46 @@ $J.after = function(func){
     resolver.reject.apply(resolver, args);
     return promise;
   };
+  this.listen = function(obj, arg$, arg1$){
+    var okEvents, okCb, ref$, failEvents, failCb, ref1$, resolver, promise;
+    okEvents = arg$[0], okCb = arg$[1];
+    ref$ = arg1$ || [null, null], failEvents = ref$[0], failCb = ref$[1];
+    ref1$ = this$.defer(), resolver = ref1$.resolver, promise = ref1$.promise;
+    if (okEvents) {
+      obj.once(okEvents, function(){
+        okHandler.apply(this, arguments);
+        return destroy();
+      });
+    }
+    if (failEvents) {
+      obj.once(failEvents, function(){
+        failHandler.apply(this, arguments);
+        return destroy();
+      });
+    }
+    function destroy(){
+      if (okEvents) {
+        obj.off(okEvents, okEvents);
+      }
+      if (failEvents) {
+        return obj.off(failEvents, failCb);
+      }
+    }
+    function okHandler(){
+      return resolver.resolve(result(okCb));
+    }
+    function failHandler(){
+      return resolver.resolve(result(failCb));
+    }
+    function result(cb){
+      if (_.isFunction(cb)) {
+        return cb();
+      } else {
+        return cb;
+      }
+    }
+    return promise;
+  };
   this._mkPromise = (ver = $.prototype.jquery)
     ? (function(){
       switch (false) {
