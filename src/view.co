@@ -103,7 +103,7 @@ let parent = Backbone.View
       $J.Dom.replaceWith $dst, $src
 
     sync: (syncName, synchronizer, events)->
-      @stopListening that if @_sync[syncName]
+      @unsync syncName
       @_sync[syncName] = synchronizer
 
       @listenTo synchronizer, '$J:sync', !(fields)~>
@@ -113,11 +113,16 @@ let parent = Backbone.View
         @listenTo synchronizer, events, !~>
           @render!
 
+      synchronizer.trigger '$J:sync:start', @
+
       @
 
     unsync: (syncName)->
-      @stopListening that if @_sync[syncName]
+      if @_sync[syncName]
+        @stopListening that
+        that.trigger '$J:sync:end', @
       delete @_sync[syncName]
+
 
       @
 

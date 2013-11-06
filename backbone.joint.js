@@ -350,10 +350,8 @@ $J.after = function(func){
       return $J.Dom.replaceWith($dst, $src);
     },
     sync: function(syncName, synchronizer, events){
-      var that, this$ = this;
-      if (that = this._sync[syncName]) {
-        this.stopListening(that);
-      }
+      var this$ = this;
+      this.unsync(syncName);
       this._sync[syncName] = synchronizer;
       this.listenTo(synchronizer, '$J:sync', function(fields){
         this$.renderFields(syncName, fields);
@@ -363,12 +361,14 @@ $J.after = function(func){
           this$.render();
         });
       }
+      synchronizer.trigger('$J:sync:start', this);
       return this;
     },
     unsync: function(syncName){
       var that;
       if (that = this._sync[syncName]) {
         this.stopListening(that);
+        that.trigger('$J:sync:end', this);
       }
       delete this._sync[syncName];
       return this;
