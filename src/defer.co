@@ -29,24 +29,17 @@ let @ = $J.Deferred = {}
   #convert event to promise
   @listen = (obj, [okEvents, okCb], [failEvents, failCb] || [null, null])~>
     {resolver, promise} = @defer!
-    if okEvents
-      obj.once okEvents, ->
-        okHandler ...
-        destroy!
-
-    if failEvents
-      obj.once failEvents, ->
-        failHandler ...
-        destroy!
-
-    function destroy
-      obj.off okEvents, okEvents if okEvents
-      obj.off failEvents, failCb if failEvents
     
+    obj.once okEvents, okHandler if okEvents
+
+    obj.once failEvents, failHandler if failEvents
+
     function okHandler
       resolver.resolve result okCb
+      obj.off failEvents, failHandler if failEvents
     function failHandler
       resolver.resolve result failCb
+      obj.off okEvents, okHandler if okEvents
     function result cb
       if _.isFunction cb
         cb!

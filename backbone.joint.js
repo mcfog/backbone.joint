@@ -142,30 +142,22 @@ $J.after = function(func){
     ref$ = arg1$ || [null, null], failEvents = ref$[0], failCb = ref$[1];
     ref1$ = this$.defer(), resolver = ref1$.resolver, promise = ref1$.promise;
     if (okEvents) {
-      obj.once(okEvents, function(){
-        okHandler.apply(this, arguments);
-        return destroy();
-      });
+      obj.once(okEvents, okHandler);
     }
     if (failEvents) {
-      obj.once(failEvents, function(){
-        failHandler.apply(this, arguments);
-        return destroy();
-      });
-    }
-    function destroy(){
-      if (okEvents) {
-        obj.off(okEvents, okEvents);
-      }
-      if (failEvents) {
-        return obj.off(failEvents, failCb);
-      }
+      obj.once(failEvents, failHandler);
     }
     function okHandler(){
-      return resolver.resolve(result(okCb));
+      resolver.resolve(result(okCb));
+      if (failEvents) {
+        return obj.off(failEvents, failHandler);
+      }
     }
     function failHandler(){
-      return resolver.resolve(result(failCb));
+      resolver.resolve(result(failCb));
+      if (okEvents) {
+        return obj.off(okEvents, okHandler);
+      }
     }
     function result(cb){
       if (_.isFunction(cb)) {
