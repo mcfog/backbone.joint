@@ -123,7 +123,6 @@ let parent = Backbone.View
         that.trigger '$J:sync:end', @
       delete @_sync[syncName]
 
-
       @
 
     setView: (selector, view)->
@@ -153,6 +152,8 @@ let parent = Backbone.View
     ##### override methods to manage subviews
     remove: $J.before parent::remove, !->
       @removeSubviews!
+      @unsync key for key in @_sync
+
     delegateEvents: $J.before parent::delegateEvents, !->
       @mapSubviews !-> it.delegateEvents! if it.$el
     undelegateEvents: $J.before parent::undelegateEvents, !->

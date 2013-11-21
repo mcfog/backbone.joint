@@ -394,7 +394,11 @@ $J.after = function(func){
       return this;
     },
     remove: $J.before(parent.prototype.remove, function(){
+      var key;
       this.removeSubviews();
+      for (key in this._sync) {
+        this.unsync(key);
+      }
     }),
     delegateEvents: $J.before(parent.prototype.delegateEvents, function(){
       this.mapSubviews(function(it){
