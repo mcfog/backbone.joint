@@ -154,7 +154,7 @@ let parent = Backbone.View
       @removeSubviews!
       @unsync key for key in @_sync
 
-    delegateEvents: $J.before parent::delegateEvents, !->
+    delegateEvents: $J.after parent::delegateEvents, !->
       @mapSubviews !-> it.delegateEvents! if it.$el
     undelegateEvents: $J.before parent::undelegateEvents, !->
       @mapSubviews !-> it.undelegateEvents! if it.$el

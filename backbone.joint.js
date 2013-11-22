@@ -400,7 +400,7 @@ $J.after = function(func){
         this.unsync(key);
       }
     }),
-    delegateEvents: $J.before(parent.prototype.delegateEvents, function(){
+    delegateEvents: $J.after(parent.prototype.delegateEvents, function(){
       this.mapSubviews(function(it){
         if (it.$el) {
           it.delegateEvents();
@@ -443,7 +443,26 @@ $J.ViewModel = $J.Emitter.extend({
     }
     return this;
   },
-  initialize: function(){},
+  initialize: function(){
+    var this$ = this;
+    this.views = {};
+    this.on('$J:sync:start', function(view){
+      this$.views[view.cid] = view;
+      if (_.keys(this$.views).length === 1) {
+        return this$.connect();
+      }
+    });
+    return this.on('$J:sync:end', function(view){
+      delete this.views[view.cid];
+      if (_.keys(this.views).length === 0) {
+        return this.disconnect();
+      }
+    });
+  },
+  connect: function(){},
+  disconnect: function(){
+    return this.stopListening();
+  },
   sync: function(){
     this.trigger.apply(this, ['$J:sync'].concat(slice$.call(arguments)));
   }

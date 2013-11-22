@@ -3,7 +3,20 @@ $J.ViewModel = $J.Emitter.extend do
     @initialize? ...
     @
 
-  initialize: (->)
+  initialize: ->
+    @views = {}
+    @on '$J:sync:start', (view)~>
+      @views[view.cid] = view
+      if (_.keys @views)length is 1
+        @connect!
+
+    @on '$J:sync:end', (view)->
+      delete @views[view.cid]
+      if (_.keys @views)length is 0
+        @disconnect!
+
+  connect: (->)
+  disconnect: (-> @stopListening!)
 
   sync: !->
     @trigger '$J:sync', ...@@
